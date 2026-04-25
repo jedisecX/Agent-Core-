@@ -1,0 +1,213 @@
+# app/dashboard/templates/dashboard.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentCore Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0b0f14;
+            color: #e6edf3;
+            font-family: Arial, sans-serif;
+        }
+
+        .wrapper {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            background: #0f172a;
+            color: #ffffff;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 14px;
+            resize: vertical;
+            font-size: 15px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .run-btn {
+            background: #22c55e;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .clear-btn {
+            background: #ef4444;
+            color: white;
+            margin-left: 10px;
+        }
+
+        pre {
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 16px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .status {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+    <h1>AgentCore Dashboard</h1>
+    <div class="subtitle">
+        Local autonomous runtime control panel
+    </div>
+
+    <div class="card">
+        <h2>Run Agent</h2>
+
+        <textarea
+            id="message"
+            placeholder="Enter request for agent..."
+        ></textarea>
+
+        <button
+            class="run-btn"
+            onclick="runAgent()"
+        >
+            Execute
+        </button>
+
+        <button
+            class="clear-btn"
+            onclick="clearMemory()"
+        >
+            Clear Memory
+        </button>
+
+        <div
+            class="status"
+            id="status"
+        >
+            Ready.
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Agent Response</h2>
+
+        <pre id="output">
+Awaiting execution...
+        </pre>
+    </div>
+
+</div>
+
+<script>
+async function runAgent() {
+    const message = document.getElementById("message").value;
+    const output = document.getElementById("output");
+    const status = document.getElementById("status");
+
+    if (!message.trim()) {
+        status.innerText = "Message cannot be empty.";
+        return;
+    }
+
+    status.innerText = "Executing...";
+    output.innerText = "Running...";
+
+    try {
+        const response = await fetch("/agent/run", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: message
+            })
+        });
+
+        const data = await response.json();
+
+        output.innerText = JSON.stringify(
+            data,
+            null,
+            2
+        );
+
+        status.innerText = "Execution complete.";
+    } catch (error) {
+        output.innerText = error.toString();
+        status.innerText = "Execution failed.";
+    }
+}
+
+async function clearMemory() {
+    const status = document.getElementById("status");
+
+    status.innerText = "Clearing memory...";
+
+    try {
+        const response = await fetch(
+            "/api/memory/clear",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    confirm: true
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        status.innerText = data.message || "Done.";
+    } catch (error) {
+        status.innerText = "Memory clear failed.";
+    }
+}
+</script>
+
+</body>
+</html>
